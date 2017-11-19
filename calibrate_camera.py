@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+import pickle
 
 # prepare object points
 nx = 9
@@ -49,3 +50,11 @@ dst = cv2.undistort(img, mtx, dist, None, mtx)
 
 # Write out undistorted images
 cv2.imwrite(out_dir+'undistorted_'+items[0], dst)
+
+# Save calibration info
+calib_pickle = {}
+calib_pickle["mtx"]   = mtx
+calib_pickle["dist"]  = dist
+calib_pickle["rvecs"] = rvecs
+calib_pickle["tvecs"] = tvecs
+pickle.dump(calib_pickle, open('calib_pickle.p', 'wb'))
