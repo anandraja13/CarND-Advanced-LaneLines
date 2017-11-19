@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+# Compute IPM transformation matrix
 def get_ipm_transform():
     src = np.float32([(536,488),
                     (751,488),
@@ -14,12 +15,14 @@ def get_ipm_transform():
 
     return M
 
+# Transform image to IPM
 def inverse_perspective_mapping(img):
     M = get_ipm_transform()
     h,w = img.shape[:2]
     warped = cv2.warpPerspective(img, M, (w,h), flags=cv2.INTER_LINEAR)
     return warped
 
+# Compute IPM on a test image
 img = cv2.imread('test_images/straight_lines1.jpg')
 img_ipm = inverse_perspective_mapping(img)
 
