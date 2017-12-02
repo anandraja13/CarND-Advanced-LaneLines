@@ -105,10 +105,10 @@ def hls_select(img, thresh=(0, 255)):
 # Combined segmentation pipeline
 def segmentation_pipeline(ipm_img):
     # Compute individual thresholded images
-    sobel_abs = seg.abs_sobel_thresh(ipm_img, 'x', 30, 255)
-    sobel_mag = seg.mag_thresh(ipm_img, 15, (58, 255))
-    sobel_dir = seg.dir_threshold(ipm_img, 15, (0,0.2))
-    color_hsl = seg.hls_select(ipm_img, (180,255))
+    sobel_abs = abs_sobel_thresh(ipm_img, 'x', 30, 255)
+    sobel_mag = mag_thresh(ipm_img, 15, (58, 255))
+    sobel_dir = dir_threshold(ipm_img, 15, (0,0.2))
+    color_hsl = hls_select(ipm_img, (180,255))
 
     # Compute combined threshold
     segmented_img = np.zeros_like(sobel_abs)
