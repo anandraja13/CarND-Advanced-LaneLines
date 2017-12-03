@@ -114,6 +114,7 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix = 50):
     left_idx  = []
     right_idx = []
 
+    rect_corners = []
     for window in range(nwindows):
         win_y_low  = binary_warped.shape[0] - (window+1)*window_height
         win_y_high = binary_warped.shape[0] - (window  )*window_height
@@ -121,6 +122,8 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix = 50):
         win_xleft_high  = leftx_current + margin
         win_xright_low  = rightx_current - margin
         win_xright_high = rightx_current + margin
+
+        rect_corners.append((win_y_low, win_y_high, win_xleft_low, win_xleft_high, win_xright_low, win_xright_high))
 
         good_left_idx = ((nzy >= win_y_low) & (nzy < win_y_high) &
         (nzx >= win_xleft_low) &  (nzx < win_xleft_high)).nonzero()[0]
@@ -135,7 +138,7 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix = 50):
         if len(good_left_idx) > minpix:
             leftx_current = np.int(np.mean(nzx[good_left_idx]))
         if len(good_right_idx) > minpix:
-            rightx_current = np.int(np.mean(nzy[good_right_idx]))
+            rightx_current = np.int(np.mean(nzx[good_right_idx]))
 
 
     left_idx  = np.concatenate(left_idx)
@@ -150,9 +153,9 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix = 50):
     left_fit  = np.polyfit(lefty, leftx, 2)
     right_fit = np.polyfit(righty, rightx, 2)
 
-    return left_fit, right_fit, left_idx, right_idx, nzx, nzy
+    return left_fit, right_fit, left_idx, right_idx, nzx, nzy, rect_corners
 
-def plot_lane_fit(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, nzy, nwindows=9, margin=100):
+def plot_lane_fit(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, nzy, rect_corners, nwindows=10, margin=40):
 
     # Create image for visualization
     out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
@@ -160,6 +163,11 @@ def plot_lane_fit(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, 
     # Mark x and y points - left lane in red, right in blue
     out_img[nzy[left_idx], nzx[left_idx]]   = [255, 0, 0]
     out_img[nzy[right_idx], nzx[right_idx]] = [0, 0, 255]
+
+    # Draw rectangles
+    for rect in rect_corners:
+        cv2.rectangle(out_img, (rect[2],rect[0]), (rect[3],rect[1]), (0,255,0), 2)
+        cv2.rectangle(out_img, (rect[4],rect[0]), (rect[5],rect[1]), (0,255,0), 2)
 
     # Plot line fit
     ploty = np.linspace(0, binary_warped.shape[0]-1,binary_warped.shape[0])
