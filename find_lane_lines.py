@@ -244,35 +244,32 @@ def plot_lane_fit_poly(binary_warped, left_fit, right_fit, left_idx, right_idx, 
 def radius_of_curvature(poly_fit, y_eval):
     radius = ((1 + (2*poly_fit[0]*y_eval + poly_fit[1])**2)**1.5) / np.absolute(2*poly_fit[0])
 
-def compute_radius_and_center_dist(img, left_fit, right_fit, left_idx, right_idx):
+def compute_radius_and_center_dist(ipm_img, left_fit, right_fit):
     # Extrinsics
-    x_res = 3.7/350 # meters per pixel (the lane width seems to be 350 pixels, and is typically 3.7 meters)
-    y_res = 3.048/180 # meters per pixel ( the dashed line seems to be 180 pixels, and is typically 3.048 meters)
+    xm_per_pix = 3.7/350 # meters per pixel (the lane width seems to be 350 pixels, and is typically 3.7 meters)
+    ym_per_pix = 3.048/180 # meters per pixel ( the dashed line seems to be 180 pixels, and is typically 3.048 meters)
 
-    y_bottom = img.shape[0]-1
+    y_eval = ipm_img.shape[0]-1
 
-    nz  = img.nonzero()
-    nzy = np.array(nz[0])
-    nzx = np.array(nz[1])
+    # Fit new polynomials to x,y in world space
+    ploty = np.linspace(0, ipm_img.shape[0]-1, ipm_img.shape[0])
+    left_fitx  = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
-    leftx  = nzx[left_idx]
-    lefty  = nzy[left_idx]
-    rightx = nzx[right_idx]
-    righty = nzy[right_idx]
+    left_fit_cr = np.polyfit(ploty*ym_per_pix, left_fitx*xm_per_pix, 2)
+    right_fit_cr = np.polyfit(ploty*ym_per_pix, right_fitx*xm_per_pix, 2)
 
-    left_fit_world  = np.polyfit(lefty*y_res, leftx*x_res, 2)
-    right_fit_world = np.polyfit(righty*y_res, rightx*x_res, 2)
+    # Calculate the new radii of curvature
+    left_radius = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+    right_radius = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
 
-    left_radius  = radius_of_curvature(left_fit_world, y_bottom)
-    right_radius = radius_of_curvature(right_fit_world, y_bottom)
+    vehicle_center = ipm_img.shape[1] / 2
 
-    vehicle_center = img.shape[1] / 2
-
-    left_x_pix  = left_fit[0]*y_bottom**2 + left_fit[1]*y_bottom + left_fit[2]
-    right_x_pix = right_fit[0]*y_bottom**2 + right_fit[1]*y_bottom + right_fit[2]
+    left_x_pix  = left_fit[0]*y_eval**2 + left_fit[1]*y_eval + left_fit[2]
+    right_x_pix = right_fit[0]*y_eval**2 + right_fit[1]*y_eval + right_fit[2]
     lane_center = (left_x_pix + right_x_pix) / 2
 
-    dist = (vehicle_center - lane_center) * x_res
+    dist = (vehicle_center - lane_center) * xm_per_pix
 
     return left_radius, right_radius, dist
 
@@ -306,3 +303,16 @@ def draw_nice_lane(img, orig_warped, seg_img, left_fit, right_fit, M_inv):
     result = cv2.addWeighted(img, 1, newwarp, 0.3, 0)
 
     return result
+
+def draw_lane_details(orig_img, radius, dist):
+    img = np.copy(orig_img)
+
+    font = cv2.FONT_HERSHEY_DUPLEX
+    text = 'Radius of Curvature: ' + '{:04.3f}'.format(radius) + 'm'
+
+    cv2.putText(img, text, (50,50), font, 2, (0,255,0), 2, cv2.LINE_AA)
+
+    text = 'Distance from Center:' + '{:04.2f}'.format(dist) + 'm'
+
+    cv2.putText(img, text, (50, 100), font, 2, (0,255,0), 2, cv2.LINE_AA)
+    return img
