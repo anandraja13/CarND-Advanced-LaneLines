@@ -102,15 +102,30 @@ def hls_select(img, thresh=(0, 255)):
     # 3) Return a binary image of threshold result
     return binary_output
 
+# Define a function that threshold B-channel of LAB
+# Use exclusive lower bound (>) and inclusive upper (<=)
+def lab_select(img, thresh=(0,255)):
+    # 1) Convert to LAB color space
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    b = lab[:,:,2]
+
+    # 2) Apply a threshold to the B channel
+    binary_output = np.zeros_like(b)
+    binary_output[ (b>thresh[0]) & (b<thresh[1]) ] = 1
+
+    # 3) Return a binary image of threshold result
+    return binary_output
+
 # Combined segmentation pipeline
 def segmentation_pipeline(ipm_img):
     # Compute individual thresholded images
     sobel_abs = abs_sobel_thresh(ipm_img, 'x', 30, 255)
     sobel_mag = mag_thresh(ipm_img, 15, (58, 255))
     sobel_dir = dir_threshold(ipm_img, 15, (0,0.2))
-    color_hsl = hls_select(ipm_img, (180,255))
+    color_hsl = hls_select(ipm_img, (210,255))
+    brght_lab = lab_select(ipm_img, (184,255))
 
     # Compute combined threshold
     segmented_img = np.zeros_like(sobel_abs)
-    segmented_img[((sobel_abs==1) | (sobel_mag==1)) | ((color_hsl==1) & (sobel_dir==1))] = 1
+    segmented_img[(color_hsl==1) | (brght_lab==1)] = 1
     return segmented_img
