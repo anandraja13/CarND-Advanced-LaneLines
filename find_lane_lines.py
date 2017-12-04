@@ -162,8 +162,8 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix=50):
 def update_lane_fit(binary_warped, left_fit, right_fit, nwindows=10, margin=40, minpix=50):
 
     nz  = binary_warped.nonzero()
-    nzx = np.array(nz[0])
-    nzy = np.array(nz[1])
+    nzy = np.array(nz[0])
+    nzx = np.array(nz[1])
 
     left_idx = ((nzx > (left_fit[0]*(nzy**2) + left_fit[1]*nzy +
     left_fit[2] - margin)) & (nzx < (left_fit[0]*(nzy**2) +
@@ -180,8 +180,12 @@ def update_lane_fit(binary_warped, left_fit, right_fit, nwindows=10, margin=40, 
     righty = nzy[right_idx]
 
     # Fit a second order polynomial to each
-    left_fit = np.polyfit(lefty, leftx, 2)
-    right_fit = np.polyfit(righty, rightx, 2)
+    left_fit  = None
+    right_fit = None
+    if len(leftx) != 0:
+        left_fit = np.polyfit(lefty, leftx, 2)
+    if len(rightx) != 0:
+        right_fit = np.polyfit(righty, rightx, 2)
 
     return left_fit, right_fit, left_idx, right_idx, nzx, nzy
 
@@ -351,3 +355,33 @@ class Line():
         self.allx = None
         #y values for detected line pixels
         self.ally = None
+        #recent fits
+        self.recent_fits = []
+
+    def update(self, fit, idx):
+        if fit is not None:
+            if self.best_fit is not None:
+                # update diffs
+                self.diffs = abs(fit - self.best_fit)
+
+            # If fit is too different, reject it
+            if (self.diffs[0]>0.002 or self.diffs[1] > 1 or self.diffs[2] > 100) and len(self.recent_fits)>0:
+                self.detected = False
+            else:
+                self.detected = True
+                # update current fit
+                self.current_fit = fit
+                # add fit to recent fits
+                self.recent_fits.append(fit)
+                if len(self.recent_fits) > 5:
+                    self.recent_fits = self.recent_fits[len(self.recent_fits)-5:]
+                # update best fit with new fit
+                self.best_fit = np.average(self.recent_fits, axis=0)
+        else:
+            self.detected = False
+
+            if len(self.recent_fits) > 0:
+                # move sliding window
+                self.recent_fits = self.recent_fits[:len(self.recent_fits)-1]
+                # update best fit
+                self.best_fit = np.average(self.recent_fits, axis=0)
