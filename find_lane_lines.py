@@ -289,6 +289,9 @@ def draw_nice_lane(img, orig_warped, seg_img, left_fit, right_fit, M_inv):
     if left_fit is None or right_fit is None:
         return orig_warped
 
+    if (np.isnan(left_fit).any()) or (np.isnan(right_fit).any()):
+        return orig_warped
+
     ipm_img = np.copy(orig_warped)
 
     warp_zero = np.zeros_like(ipm_img).astype(np.uint8)
