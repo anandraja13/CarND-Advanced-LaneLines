@@ -3,7 +3,10 @@ import cv2
 import matplotlib.pyplot as plt
 
 def window_mask(width, height, img_ref, center, level):
-
+    """
+    Create a window mask
+    """
+    
     output = np.zeros_like(img_ref)
 
     ymin = int(img_ref.shape[0]-(level+1)*height)
@@ -14,7 +17,10 @@ def window_mask(width, height, img_ref, center, level):
     return output
 
 def find_window_centroids(image, window_width, window_height, margin):
-
+    """
+    Find window centroids on image
+    """
+    
     window_centroids = [] # Store the (left,right) window centroid positions per level
     window = np.ones(window_width) # Create our window template that we will use for convolution
 
@@ -56,7 +62,10 @@ def find_window_centroids(image, window_width, window_height, margin):
     return window_centroids
 
 def plot_window_centroids(warped, window_centroids, window_width, window_height):
-
+    """
+    Plot window centroids on warped image
+    """
+    
     # If we found any window centers
     if len(window_centroids) > 0:
         # Points used to draw all the left and right windows
@@ -87,7 +96,10 @@ def plot_window_centroids(warped, window_centroids, window_width, window_height)
     return output
 
 def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix=50):
-
+    """
+    Find left and right lane fits
+    """
+    
     ystart = binary_warped.shape[0]//3
 
     # Take a histogram of the bottom two-thirds of the image
@@ -160,7 +172,10 @@ def find_lane_fit(binary_warped, nwindows=10, margin=40, minpix=50):
     return left_fit, right_fit, left_idx, right_idx, nzx, nzy, rect_corners
 
 def update_lane_fit(binary_warped, left_fit, right_fit, nwindows=10, margin=40, minpix=50):
-
+    """
+    Update lane fits
+    """
+    
     nz  = binary_warped.nonzero()
     nzy = np.array(nz[0])
     nzx = np.array(nz[1])
@@ -190,7 +205,10 @@ def update_lane_fit(binary_warped, left_fit, right_fit, nwindows=10, margin=40, 
     return left_fit, right_fit, left_idx, right_idx, nzx, nzy
 
 def plot_lane_fit(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, nzy, rect_corners, nwindows=10, margin=40):
-
+    """
+    Insert lane with rectangles on image
+    """
+    
     # Create image for visualization
     out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
 
@@ -215,7 +233,10 @@ def plot_lane_fit(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, 
     plt.ylim(binary_warped.shape[0], 0)
 
 def plot_lane_fit_poly(binary_warped, left_fit, right_fit, left_idx, right_idx, nzx, nzy, nwindows=10, margin=40):
-
+    """
+    Insert lane detection and search areas on image
+    """
+    
     # Create image for visualization
     out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
     win_img = np.zeros_like(out_img)
@@ -250,9 +271,15 @@ def plot_lane_fit_poly(binary_warped, left_fit, right_fit, left_idx, right_idx, 
     plt.ylim(binary_warped.shape[0], 0)
 
 def radius_of_curvature(poly_fit, y_eval):
+    """ Radius of curvature"""
+    
     radius = ((1 + (2*poly_fit[0]*y_eval + poly_fit[1])**2)**1.5) / np.absolute(2*poly_fit[0])
 
 def compute_radius_and_center_dist(ipm_img, left_fit, right_fit):
+    """
+    Calculate radius of curvature and distance from center
+    """
+    
     # Extrinsics
     xm_per_pix = 3.7/350 # meters per pixel (the lane width seems to be 350 pixels, and is typically 3.7 meters)
     ym_per_pix = 3.048/180 # meters per pixel ( the dashed line seems to be 180 pixels, and is typically 3.048 meters)
@@ -264,7 +291,8 @@ def compute_radius_and_center_dist(ipm_img, left_fit, right_fit):
 
     # Fit new polynomials to x,y in world space
     ploty = np.linspace(0, ipm_img.shape[0]-1, ipm_img.shape[0])
-    left_fitx  = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+    
+    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
     left_fit_cr = np.polyfit(ploty*ym_per_pix, left_fitx*xm_per_pix, 2)
@@ -274,18 +302,22 @@ def compute_radius_and_center_dist(ipm_img, left_fit, right_fit):
     left_radius = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
     right_radius = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
 
+    # Assume camera is mounted on the lateral center of the vehicle
     vehicle_center = ipm_img.shape[1] / 2
 
-    left_x_pix  = left_fit[0]*y_eval**2 + left_fit[1]*y_eval + left_fit[2]
+    left_x_pix = left_fit[0]*y_eval**2 + left_fit[1]*y_eval + left_fit[2]
     right_x_pix = right_fit[0]*y_eval**2 + right_fit[1]*y_eval + right_fit[2]
     lane_center = (left_x_pix + right_x_pix) / 2
 
+    # Calculate distance from center
     dist = (vehicle_center - lane_center) * xm_per_pix
 
     return left_radius, right_radius, dist
 
 def draw_nice_lane(img, orig_warped, seg_img, left_fit, right_fit, M_inv):
-
+    """
+    Insert polygon bounded by lane detections on image.
+    """
     if left_fit is None or right_fit is None:
         return orig_warped
 
@@ -319,7 +351,9 @@ def draw_nice_lane(img, orig_warped, seg_img, left_fit, right_fit, M_inv):
     return result
 
 def draw_lane_details(orig_img, radius, dist):
-
+    """
+    Insert radius of curvature and distance from center to image
+    """
     if radius is None or dist is None:
         return orig_img
 
@@ -335,9 +369,13 @@ def draw_lane_details(orig_img, radius, dist):
     cv2.putText(img, text, (50, 100), font, 2, (0,255,0), 2, cv2.LINE_AA)
     return img
 
-# Define a class to receive the characteristics of each line detection
+
 class Line():
+    """
+    Line object to hold data associated with each lane line detection
+    """
     def __init__(self):
+        
         # was the line detected in the last iteration?
         self.detected = False
         # x values of the last n fits of the line

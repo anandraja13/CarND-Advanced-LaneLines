@@ -8,7 +8,7 @@ This involves the following steps:
 * __Camera Calibration:__ Calibrate the camera given a set of checkerboard images captured using the camera. The result of the calibration process is a set of distortion coefficients and a camera calibration matrix.
 * __Undistort images:__ Undistort the raw images using the camera calibration matrix and distortion coefficients.
 * __Segment lane pixels:__ Segment lane-like pixels using basic image processing techniques - use color transforms, gradients and thresholding to create a binary image.
-* __Birds Eye View Transform:__Apply a perspective transform to rectify the binary image to a birds-eye view. The birds-eye-view eliminates perspective distortions in the image. As a result, straight lines in the image (like lanes) appear straight in this birds-eye-view image.
+* __Birds Eye View Transform:__ Apply a perspective transform to rectify the binary image to a birds-eye view. The birds-eye-view eliminates perspective distortions in the image. As a result, straight lines in the image (like lanes) appear straight in this birds-eye-view image.
 * __Find Lane Boundaries:__ Detect lane pixels and fit a 2nd order polynomial to find lane boundary coefficients.
 * __Compute Radius of Curvature and Vehicle Position:__ Determine the curvature of the lane and vehicle position with respect to the center.
 * __Transform lane boundaries to original image:__ Warp the detected lane boundaries back onto the original image.

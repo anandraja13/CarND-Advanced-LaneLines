@@ -1,10 +1,11 @@
 import numpy as np
 import cv2
 
-# Define a function that applies Sobel x or y,
-# then takes an absolute value and applies a threshold.
 def abs_sobel_thresh(img, orient='x', thresh_min=0, thresh_max=255):
-
+    """
+    Apply Sobel filter and threshold absolute values
+    """
+    
     # Apply the following steps to img
     # 1) Convert to grayscale
     # NOTE: This assumes use of cv2.imread to read in images
@@ -31,11 +32,11 @@ def abs_sobel_thresh(img, orient='x', thresh_min=0, thresh_max=255):
     return binary_output
 
 
-# Define a function that applies Sobel x and y,
-# then computes the magnitude of the gradient
-# and applies a threshold
 def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
-
+    """
+    Apply Sobel filters in X and Y, and threshold gradient magnitude.
+    """
+    
     # Apply the following steps to img
     # 1) Convert to grayscale
     # NOTE: This assumes use of cv2.imread to read in images
@@ -59,11 +60,11 @@ def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
     return binary_mask
 
 
-# Define a function that applies Sobel x and y,
-# then computes the direction of the gradient
-# and applies a threshold.
 def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
-
+    """
+    Apply Sobel filters in x and y, and threshold the gradient direction
+    """
+    
     # Apply the following steps to img
     # 1) Convert to grayscale
     # NOTE: This assumes use of cv2.imread to read in images
@@ -88,9 +89,11 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     return binary_output
 
 
-# Define a function that thresholds the S-channel of HLS
-# Use exclusive lower bound (>) and inclusive upper (<=)
 def hls_select(img, thresh=(0, 255)):
+    """
+    Threshold HLS S-channel using exclusive lower and inclusive upper bound.
+    """
+    
     # 1) Convert to HLS color space
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     s = hls[:,:,2]
@@ -102,9 +105,12 @@ def hls_select(img, thresh=(0, 255)):
     # 3) Return a binary image of threshold result
     return binary_output
 
-# Define a function that threshold B-channel of LAB
-# Use exclusive lower bound (>) and inclusive upper (<=)
+
 def lab_select(img, thresh=(0,255)):
+    """
+    Threshold LAB B-channel using exclusive lower and inclusive upper bound.
+    """
+    
     # 1) Convert to LAB color space
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     b = lab[:,:,2]
@@ -116,8 +122,12 @@ def lab_select(img, thresh=(0,255)):
     # 3) Return a binary image of threshold result
     return binary_output
 
-# Combined segmentation pipeline
+
 def segmentation_pipeline(ipm_img):
+    """
+    Segmentation pipeline to apply to ipm image
+    """
+    
     # Compute individual thresholded images
     sobel_abs = abs_sobel_thresh(ipm_img, 'x', 30, 255)
     sobel_mag = mag_thresh(ipm_img, 15, (58, 255))
